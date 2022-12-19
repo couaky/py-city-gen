@@ -5,6 +5,17 @@ from worldsettings import WorldSettings
 
 
 class HeatMap:
+    """
+    HeatMap
+    
+    A heat map of the size of the world with float values between 0 and 1.
+
+    Values can be read from the heatmap property: a list of list of floats.
+    Format of the map: list of rows, start at the top left.
+
+    Ex: read the heat of the 5th elmt of the 2nd line:
+    value = heatmap.heatmap[2][5]
+    """
     def __init__(self, world_settings: WorldSettings) -> None:
         self.world_settings = world_settings
         self.heatmap: list[list[float]] = [[0 for j in range(world_settings.width)] for i in range(world_settings.height)]

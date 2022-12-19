@@ -8,6 +8,7 @@ from heatmap import HeatMap
 from worldsettings import WorldSettings
 from display import Printer
 
+
 def old_code():
     # Map setup
     # Need to be n^2+1
@@ -36,12 +37,14 @@ def old_code():
 
     # A street is just a vertical straight road between 2 avenues
 
+
 if __name__ == '__main__':
-    world_settings = WorldSettings(512, 256)
+    world_settings = WorldSettings(256, 256)
     heat_map = HeatMap(world_settings)
     heat_map.generate(7, -0.3, 1.3)
 
     printer = Printer(world_settings)
     printer.addheat(heat_map)
+    printer.addgrid()
 
     printer.image.show()
