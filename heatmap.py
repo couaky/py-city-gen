@@ -7,7 +7,7 @@ from worldsettings import WorldSettings
 class HeatMap:
     """
     HeatMap
-    
+
     A heat map of the size of the world with float values between 0 and 1.
 
     Values can be read from the heatmap property: a list of list of floats.
@@ -70,7 +70,7 @@ class HeatMap:
         for x in range(size):
             for y in range(size):
                 gen_heatmap[y][x] = self._clamp(gen_heatmap[y][x], 0, 1)
-        
+
         # Scale to world
         for y in range(self.world_settings.height):
             for x in range(self.world_settings.width):

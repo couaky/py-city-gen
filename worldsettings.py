@@ -34,7 +34,7 @@ class WorldSettings:
         self.width = width
         self.height = height
         print(f"World size: {self.width}x{self.height}")
-        
+
         grid_width = math.floor((self.width - GRID_CELL_SIZE * 2) / GRID_CELL_SIZE)
         grid_height = math.floor((self.height - GRID_CELL_SIZE * 2) / GRID_CELL_SIZE)
         print(f"Grid generated: {grid_width}x{grid_height}")
@@ -44,7 +44,7 @@ class WorldSettings:
         grid_offset_x = random.randint(grid_offset_x - GRID_MAX_OFFSET, grid_offset_x + GRID_MAX_OFFSET)
         grid_offset_y = random.randint(grid_offset_y - GRID_MAX_OFFSET, grid_offset_y + GRID_MAX_OFFSET)
         print(f"Grid offset: {grid_offset_x},{grid_offset_y}")
-        
+
         self.grid_settings = GridSettings(GRID_CELL_SIZE, grid_width, grid_height, Vec2(grid_offset_x, grid_offset_y))
 
     def from_grid_to_world(self, vertex: Vec2) -> Vec2:
@@ -52,6 +52,7 @@ class WorldSettings:
         new_x = vertex.x * self.grid_settings.cellsize + self.grid_settings.offset.x
         new_y = vertex.y * self.grid_settings.cellsize + self.grid_settings.offset.y
         return Vec2(new_x, new_y)
+
 
 @dataclass
 class GridSettings:

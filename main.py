@@ -1,5 +1,3 @@
-from PIL import Image
-
 from avenuesgrid import AvenuesGrid
 from heatmap import HeatMap
 from worldsettings import WorldSettings
