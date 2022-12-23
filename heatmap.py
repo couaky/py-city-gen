@@ -30,7 +30,7 @@ class HeatMap:
         Then the map is fitted to the world size with a simple nearest logic.
         """
         size: int = pow(2, scale) + 1
-        print("Generate a heat map of size {}".format(size))
+        print(f"Generate a heat map of size {size}")
 
         gen_heatmap = [[min_heat for j in range(size)] for i in range(size)]
         middle = int((size - 1) / 2)
@@ -81,16 +81,16 @@ class HeatMap:
     def _clamp(self, val: float, min_val: float, max_val: float) -> float:
         return min(max(val, min_val), max_val)
 
-    def _simple_mean(self, heats: 'tuple[float]') -> float:
+    def _simple_mean(self, heats: "tuple[float]") -> float:
         return math.fsum(heats) / len(heats)
 
-    def _rand_in_range(self, heats: 'tuple[float]') -> float:
+    def _rand_in_range(self, heats: "tuple[float]") -> float:
         if min(heats) == max(heats):
             return heats[0]
         else:
             return random.uniform(min(heats), max(heats))
 
-    def _rand_in_80_range(self, heats: 'tuple[float]') -> float:
+    def _rand_in_80_range(self, heats: "tuple[float]") -> float:
         min_val = min(heats)
         max_val = max(heats)
         if min_val == max_val:
@@ -99,5 +99,5 @@ class HeatMap:
             max_val_80 = min_val + 0.8 * (max_val - min_val)
             return random.uniform(min_val, max_val_80)
 
-    def _compute_func(self, heats: 'tuple[float]') -> float:
+    def _compute_func(self, heats: "tuple[float]") -> float:
         return self._rand_in_80_range(heats)
