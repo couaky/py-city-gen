@@ -5,17 +5,31 @@ from PIL import Image
 from avenuesgrid import AvenuesGrid
 from worldsettings import WorldSettings
 from heatmap import HeatMap
+from streetsblocks import StreetsBlocks, StreetsPattern
 from utils import Vec2
 
 
 class Printer:
     def __init__(self, world_settings: WorldSettings) -> None:
         self.world_settings = world_settings
-        self.image = None
+        self.image: Image = None
 
-    def _blend_to_image(self, new_image) -> None:
+    def _is_black(self, color: "tuple(int, int, int)") -> bool:
+        return color[0] == 0 and color[1] == 0 and color[2] == 0
+
+    def _mix_color(self, colorA: "tuple(int, int, int)", colorB: "tuple(int, int, int)") -> "tuple(int, int, int)":
+        return tuple(math.floor(chan[0] * 0.25 + chan[1] * 0.75) for chan in zip(colorA, colorB))
+
+    def _blend_to_image(self, new_image: Image) -> None:
         if self.image is not None:
-            self.image = Image.blend(self.image, new_image, 0.5)
+            # self.image = Image.blend(self.image, new_image, 0.5)
+            bottom_data = list(self.image.getdata())
+            top_data = list(new_image.getdata())
+            new_data = []
+            for pixels in zip(bottom_data, top_data):
+                new_data.append(pixels[0] if self._is_black(pixels[1]) else self._mix_color(pixels[0], pixels[1]))
+            self.image = Image.new("RGB", (self.world_settings.width, self.world_settings.height))
+            self.image.putdata(new_data)
         else:
             self.image = new_image
 
@@ -29,7 +43,7 @@ class Printer:
                 heat_map_rgb.append((pix_rgb, 255, 255))
         heat_map_img.putdata(heat_map_rgb)
 
-        self._blend_to_image(heat_map_img)
+        self._blend_to_image(Image.eval(heat_map_img.convert("RGB"), lambda val: math.floor(val * 0.5)))
 
     def addgrid(self) -> None:
         grid_img = Image.new("RGB", (self.world_settings.width, self.world_settings.height))
@@ -37,7 +51,7 @@ class Printer:
         for j in range(self.world_settings.grid_settings.height + 1):
             for i in range(self.world_settings.grid_settings.width + 1):
                 index = (j * self.world_settings.grid_settings.cellsize + self.world_settings.grid_settings.offset.y) * self.world_settings.width + (i * self.world_settings.grid_settings.cellsize + self.world_settings.grid_settings.offset.x)
-                grid_rgb[index] = (0, 0, 255)
+                grid_rgb[index] = (100, 100, 100)
         grid_img.putdata(grid_rgb)
 
         self._blend_to_image(grid_img)
@@ -51,7 +65,7 @@ class Printer:
         avenues_img = Image.new("RGB", (self.world_settings.width, self.world_settings.height))
         avenues_rgb = [(0, 0, 0) for i in range(self.world_settings.width * self.world_settings.height)]
         intersections_color = (255, 255, 255)
-        junctions_color = (255, 0, 0)
+        junctions_color = (200, 200, 200)
         vertices_x_count = self.world_settings.grid_settings.width + 1  # There is one more vertices than the number of cell in a grid
         vertices_y_count = self.world_settings.grid_settings.height + 1
         for j in range(vertices_y_count):
@@ -108,3 +122,92 @@ class Printer:
         avenues_img.putdata(avenues_rgb)
 
         self._blend_to_image(avenues_img)
+
+    def addstreets(self, streets_blocks: StreetsBlocks) -> None:
+        streets_img = Image.new("RGB", (self.world_settings.width, self.world_settings.height))
+        streets_rgb = [(0, 0, 0) for i in range(self.world_settings.width * self.world_settings.height)]
+        streets_color = (155, 155, 155)
+        cell_x_count = self.world_settings.grid_settings.width
+        cell_y_count = self.world_settings.grid_settings.height
+        street_count = math.floor((self.world_settings.grid_settings.cellsize - 1) / 3)
+        for j in range(cell_y_count):
+            for i in range(cell_x_count):
+                cell_coord = Vec2(i, j)
+                cell_index = streets_blocks.from_grid_to_index(cell_coord)
+                if cell_index in streets_blocks.streets_patterns:
+                    streets_pattern = streets_blocks.streets_patterns[cell_index]
+                    world_coord = self.world_settings.from_grid_to_world(cell_coord)
+                    if streets_pattern.street_pattern == StreetsPattern.StreetPattern.VERTICAL:
+                        for street_index in range(street_count - 1):
+                            self._draw_rectangle(
+                                world_coord + Vec2((street_index + 1) * 3, 1),
+                                world_coord + Vec2((street_index + 1) * 3, self.world_settings.grid_settings.cellsize - 2),
+                                streets_rgb,
+                                streets_color
+                            )
+                    elif streets_pattern.street_pattern == StreetsPattern.StreetPattern.HORIZONTAL:
+                        for street_index in range(street_count - 1):
+                            self._draw_rectangle(
+                                world_coord + Vec2(1, (street_index + 1) * 3),
+                                world_coord + Vec2(self.world_settings.grid_settings.cellsize - 2, (street_index + 1) * 3),
+                                streets_rgb,
+                                streets_color
+                            )
+                    elif streets_pattern.street_pattern == StreetsPattern.StreetPattern.L_TOP_RIGHT:
+                        for street_index in range(street_count - 1):
+                            self._draw_rectangle(
+                                world_coord + Vec2((street_index + 1) * 3, 1),
+                                world_coord + Vec2((street_index + 1) * 3, (self.world_settings.grid_settings.cellsize - 1) - (street_index + 1) * 3),
+                                streets_rgb,
+                                streets_color
+                            )
+                            self._draw_rectangle(
+                                world_coord + Vec2(self.world_settings.grid_settings.cellsize - (street_index + 1) * 3, (street_index + 1) * 3),
+                                world_coord + Vec2(self.world_settings.grid_settings.cellsize - 2, (street_index + 1) * 3),
+                                streets_rgb,
+                                streets_color
+                            )
+                    elif streets_pattern.street_pattern == StreetsPattern.StreetPattern.L_RIGHT_BOTTOM:
+                        for street_index in range(street_count - 1):
+                            self._draw_rectangle(
+                                world_coord + Vec2((street_index + 1) * 3, (street_index + 1) * 3),
+                                world_coord + Vec2(self.world_settings.grid_settings.cellsize - 2, (street_index + 1) * 3),
+                                streets_rgb,
+                                streets_color
+                            )
+                            self._draw_rectangle(
+                                world_coord + Vec2((street_index + 1) * 3, (street_index + 1) * 3 + 1),
+                                world_coord + Vec2((street_index + 1) * 3, self.world_settings.grid_settings.cellsize - 2),
+                                streets_rgb,
+                                streets_color
+                            )
+                    elif streets_pattern.street_pattern == StreetsPattern.StreetPattern.L_BOTTOM_LEFT:
+                        for street_index in range(street_count - 1):
+                            self._draw_rectangle(
+                                world_coord + Vec2((street_index + 1) * 3, (self.world_settings.grid_settings.cellsize - 1) - (street_index + 1) * 3),
+                                world_coord + Vec2((street_index + 1) * 3, self.world_settings.grid_settings.cellsize - 2),
+                                streets_rgb,
+                                streets_color
+                            )
+                            self._draw_rectangle(
+                                world_coord + Vec2(1, (street_index + 1) * 3),
+                                world_coord + Vec2((self.world_settings.grid_settings.cellsize - 2) - (street_index + 1) * 3, (street_index + 1) * 3),
+                                streets_rgb,
+                                streets_color
+                            )
+                    elif streets_pattern.street_pattern == StreetsPattern.StreetPattern.L_LEFT_TOP:
+                        for street_index in range(street_count - 1):
+                            self._draw_rectangle(
+                                world_coord + Vec2(1, (street_index + 1) * 3),
+                                world_coord + Vec2((street_index + 1) * 3, (street_index + 1) * 3),
+                                streets_rgb,
+                                streets_color
+                            )
+                            self._draw_rectangle(
+                                world_coord + Vec2((street_index + 1) * 3, 1),
+                                world_coord + Vec2((street_index + 1) * 3, (street_index + 1) * 3 - 1),
+                                streets_rgb,
+                                streets_color
+                            )
+        streets_img.putdata(streets_rgb)
+        self._blend_to_image(streets_img)

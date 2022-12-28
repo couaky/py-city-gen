@@ -11,8 +11,8 @@ The world and the grid
 The world is a matrix. Each element of the matrix is a tile that can be of different type.
 
 The grid is the base shape of the city.
-Avenues (main roads) follow the edges of the grid.
-Blocks (buildings with smaller roads, usually surronded by avenues) are aligned with grid cells.
+Avenues (main streets) follow the edges of the grid.
+Blocks (buildings with smaller streets, usually surronded by avenues) are aligned with grid cells.
 
 Each grid cell is a square of size GRID_CELL_SIZE.
 Avenues are 2 tiles wide and overlap 2 cells.
